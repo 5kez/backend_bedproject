@@ -1,0 +1,164 @@
+name: bed-sensor-backend
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      BASE_URL: ${BASE_URL:-http://localhost:3000}
+      UPLOAD_PATH: uploads
+
+      # Point at the containers below - intentionally NOT read from .env's
+      # DB_HOST/MQTT_HOST, which may be set to a real remote host for running
+      # the app outside Docker (e.g. against a hosted DB).
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: ${MYSQL_USER:-app_user}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_DATABASE: ${MYSQL_DATABASE:-8bits}
+
+      MQTT_HOST: mosquitto
+      MQTT_PORT: 1883
+      MQTT_CLIENT_ID: ${MQTT_CLIENT_ID:-bed-sensor-backend}
+      MQTT_USERNAME: ${MQTT_USERNAME}
+      MQTT_PASSWORD: ${MQTT_PASSWORD}
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434/api/generate}
+
+      SWAGGER_PATH: ${SWAGGER_PATH:-api/docs}
+      ENABLE_SWAGGER: ${ENABLE_SWAGGER:-true}
+
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:9000}
+      CORS_METHODS: ${CORS_METHODS:-GET,HEAD,PUT,PATCH,POST,DELETE}
+      CORS_ALLOWED_HEADERS: ${CORS_ALLOWED_HEADERS:-Content-Type, Authorization}
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+    networks:
+      - backend
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          memory: 256M
+    logging: *default-logging
+
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-8bits}
+      MYSQL_USER: ${MYSQL_USER:-app_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    # Not published to the host - only the "app" container can reach it,
+    # over the internal "backend" network. Use `docker compose exec mysql
+    # mysql -u root -p` for ad-hoc access instead of exposing 3306.
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - backend
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+    logging: *default-logging
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${MYSQL_ROOT_PASSWORD}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    environment:
+      MQTT_USERNAME: ${MQTT_USERNAME}
+      MQTT_PASSWORD: ${MQTT_PASSWORD}
+    # Published because physical bed-sensor devices publish MQTT messages to
+    # this broker directly from the hospital network. Auth is required (see
+    # docker/mosquitto/mosquitto.conf) - for a real deployment, put this
+    # behind a firewall/VPN and prefer TLS on 8883 over plain 1883.
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    # Generate/refresh the password file from env vars, then start the broker.
+    entrypoint:
+      - sh
+      - -c
+      - |
+        touch /mosquitto/data/passwd
+        mosquitto_passwd -b /mosquitto/data/passwd "$$MQTT_USERNAME" "$$MQTT_PASSWORD"
+        exec mosquitto -c /mosquitto/config/mosquitto.conf
+    networks:
+      - backend
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    logging: *default-logging
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mosquitto_pub -h localhost -p 1883 -u \"$$MQTT_USERNAME\" -P \"$$MQTT_PASSWORD\" -t healthcheck -m ping -i healthcheck || exit 1",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  mosquitto_data:
+  mosquitto_log:
+  uploads_data:

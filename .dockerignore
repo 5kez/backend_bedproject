@@ -1,0 +1,38 @@
+# Dependencies & build output (installed/built fresh inside the image)
+node_modules
+dist
+coverage
+.nyc_output
+
+# Version control / editor / tooling
+.git
+.gitignore
+.vscode
+.idea
+.claude
+*.tsbuildinfo
+
+# Secrets - never bake these into an image layer
+.env
+.env.*
+!.env.example
+
+# Tests
+test
+
+# Docs
+*.md
+
+# Local data dumps / uploads - may contain sensitive data, never ship in the image
+*.sql
+uploads
+
+# Compose-only assets (mounted at runtime, not needed to build the app image)
+docker
+db
+
+# Docker files themselves (docker-entrypoint.sh is intentionally NOT listed
+# here - it's COPYed into the runtime image and must stay in the build context)
+Dockerfile
+docker-compose.yml
+.dockerignore
