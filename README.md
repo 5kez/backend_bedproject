@@ -3,8 +3,8 @@
 # 🏥 Smart Ward — Real-Time Bed & Patient Monitoring Platform
 ### ระบบติดตามเตียงและผู้ป่วยแบบเรียลไทม์สำหรับโรงพยาบาล
 
-**A production-grade, event-driven backend that turns raw IoT sensor data into life-saving alerts — in milliseconds.**
-**แพลตฟอร์ม backend ระดับ production ที่แปลงข้อมูลเซนเซอร์ IoT ดิบให้กลายเป็นการแจ้งเตือนที่ช่วยชีวิตได้ — ภายในเสี้ยววินาที**
+**An event-driven, Dockerized NestJS backend that turns raw IoT bed-sensor data into real-time alerts for nursing staff.**
+**backend แบบ event-driven ที่รันด้วย Docker แปลงข้อมูลเซนเซอร์เตียง IoT ให้เป็นการแจ้งเตือนแบบเรียลไทม์สำหรับพยาบาล**
 
 [English](#english) · [ภาษาไทย](#thai)
 
@@ -24,6 +24,32 @@
 ![ESLint](https://img.shields.io/badge/Code%20Quality-ESLint%20%2B%20Prettier-4B32C3?style=for-the-badge&logo=eslint&logoColor=white)
 
 </div>
+
+---
+
+## 👥 Team & My Role · ทีมและบทบาทของผม
+
+This system was built as a **senior project by a team of 7 students** at the Faculty of Informatics, Burapha University (2025).
+The original team repository, with the full commit history, is on GitLab: [8bit-bed-sensor/bed-sensor-backend](https://gitlab.com/8bit-bed-sensor/bed-sensor-backend).
+This GitHub repository is my **portfolio copy**, re-published with a fresh history — so the first commit contains the whole team's code, not only mine.
+
+**What I built in the original team project (Tham Kaeoket):**
+- MQTT ingestion service — per-sensor topic binding by MAC address, SpO2 / heart-rate streams, reconnect & resubscribe
+- Socket.IO gateways that push live vitals and alerts to the dashboard
+- Notification system — per-patient settings, default templates, alert history
+- Password hashing (bcrypt), change-password flow, patient image upload with auto-cleanup
+- LSTM posture / bed-exit classifier (trained and tuned myself; 99% accuracy at 25 timesteps)
+
+**What I added in this portfolio copy (Aug 2026):**
+- Removed hard-coded secrets and added `.env.example`
+- Multi-stage Dockerfile and a Docker Compose stack (app + MySQL + Mosquitto)
+- Dead-code clean-up, structured logging and bug fixes
+- Deployment on Railway and this README
+
+Other modules (for example the LLM / Text-to-SQL assistant, dashboards and most CRUD modules) were built by my teammates.
+
+> โปรเจกต์นี้เป็นโปรเจกต์จบของทีม 7 คน (คณะวิทยาการสารสนเทศ มหาวิทยาลัยบูรพา) repo นี้เป็นสำเนาสำหรับพอร์ตโฟลิโอของผม ส่วนที่ผมทำระบุไว้ด้านบน ส่วนอื่นเป็นผลงานของเพื่อนร่วมทีม
+
 
 ---
 
