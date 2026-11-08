@@ -93,8 +93,12 @@ services:
     build: . # same image as backend (layers are cached)
     image: smartbed-backend:demo
     command: ["node", "simulator/simulate.mjs"]
-    healthcheck:
-      disable: true # the image's healthcheck probes the API port
+    healthcheck: # healthy = publishing readings (heartbeat written every tick)
+      test: ["CMD", "node", "-e", "process.exit(Date.now() - Number(require('fs').readFileSync('/tmp/simulator-alive', 'utf8')) < 30000 ? 0 : 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
     environment:
       <<: *mqtt-auth
       MQTT_URL: mqtt://mosquitto:1883

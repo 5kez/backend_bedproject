@@ -13,6 +13,7 @@
 //
 // Env: MQTT_URL (mqtt://mosquitto:1883), MQTT_USERNAME, MQTT_PASSWORD,
 //      API_URL (http://backend:3000), TICK_MS (3000)
+import { writeFileSync } from 'node:fs'
 import mqtt from 'mqtt'
 import { createBedState, step } from './vitals-model.mjs'
 
@@ -75,6 +76,12 @@ async function refreshSensors() {
 
 function tick() {
   if (!client.connected) return
+  // heartbeat for the container healthcheck (compose.demo.yml)
+  try {
+    writeFileSync('/tmp/simulator-alive', String(Date.now()))
+  } catch {
+    // not fatal
+  }
   for (const { state, sensors } of beds.values()) {
     const v = step(state)
     if (sensors[1]) client.publish(`posture/${sensors[1]}`, String(v.posture === -1 ? -1 : v.posture - 1))
