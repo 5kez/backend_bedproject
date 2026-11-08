@@ -39,10 +39,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 5kez/frontend_bedproject
-          path: frontend
+          path: .ci-frontend
       - name: Start the stack
         env:
-          FRONTEND_CONTEXT: ./frontend
+          FRONTEND_CONTEXT: ./.ci-frontend
         run: docker compose -f compose.demo.yml up -d --build --wait --wait-timeout 600
       - name: Log in through the frontend's nginx and read live data
         run: |

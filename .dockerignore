@@ -36,3 +36,6 @@ db
 Dockerfile
 docker-compose.yml
 .dockerignore
+
+# CI checks out the frontend next to the code for the compose smoke test
+.ci-frontend
