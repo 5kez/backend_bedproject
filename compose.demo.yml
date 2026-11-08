@@ -93,6 +93,8 @@ services:
     build: . # same image as backend (layers are cached)
     image: smartbed-backend:demo
     command: ["node", "simulator/simulate.mjs"]
+    healthcheck:
+      disable: true # the image's healthcheck probes the API port
     environment:
       <<: *mqtt-auth
       MQTT_URL: mqtt://mosquitto:1883
