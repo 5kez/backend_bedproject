@@ -90,6 +90,7 @@ services:
       - "3000:3000" # Swagger: http://localhost:3000/api/docs
 
   simulator:
+    build: . # same image as backend (layers are cached)
     image: smartbed-backend:demo
     command: ["node", "simulator/simulate.mjs"]
     environment:
