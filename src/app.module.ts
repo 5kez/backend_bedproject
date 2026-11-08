@@ -51,7 +51,7 @@ import { AdminDashboardModule } from './dashboard/dashboardAdmin.module';
       password: process.env.DB_PASSWORD || '',
       database: process.env.DB_DATABASE || '8bits',
       autoLoadEntities: true,
-      synchronize: false,
+      synchronize: process.env.DB_SYNCHRONIZE === 'true',
       // แก้ไขปัญหาการหลุดการเชื่อมต่อ MySQL
       extra: {
         connectionLimit: 10,
