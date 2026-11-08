@@ -27,6 +27,46 @@
 
 ---
 
+## 🚀 Try it
+
+**In your browser, no install:** [skez.codes/demo/smartbed](https://skez.codes/demo/smartbed/) — the frontend with an in-browser copy of this API and fictional data.
+
+**The real stack, one click:** [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/5kez/backend_bedproject?quickstart=1) — when it finishes building, open the forwarded port **8080**.
+
+**Or locally** (Docker):
+
+```bash
+git clone https://github.com/5kez/backend_bedproject && cd backend_bedproject
+docker compose -f compose.demo.yml up --build
+# app:     http://localhost:8080     logins: nurse / admin / superadmin / reception / tech, password demo1234
+# Swagger: http://localhost:3000/api/docs
+```
+
+```mermaid
+flowchart LR
+  sim["simulator<br/>(fake bed sensors)"] -- "MQTT posture/ heartrate/ spo2/&lt;MAC&gt;" --> mq[(Mosquitto)]
+  mq --> api["backend<br/>NestJS"]
+  api <--> db[(MySQL 8.4)]
+  api -- "Socket.IO vitals + alerts" --> web["frontend<br/>Vue/Quasar + nginx"]
+  web -- "REST /api" --> api
+```
+
+| Service | What it is |
+|---|---|
+| `mysql` | schema generated from the entities ([`db/init/01-schema.sql`](db/init/01-schema.sql)) + fictional seed ([`02-seed.sql`](db/init/02-seed.sql)): 1 hospital, 2 buildings, 3 departments, 12 beds, 13 current and 36 past patients, 40 sensors, 30 days of alert history |
+| `mosquitto` | MQTT broker (password auth) |
+| `backend` | this API |
+| `simulator` | [`simulator/simulate.mjs`](simulator/simulate.mjs) asks the API which sensors sit on which bed and publishes synthetic posture / heart rate / SpO₂ every 3 s, with occasional bed exits, abnormal readings and disconnects so alerts fire |
+| `frontend` | built from [frontend_bedproject](https://github.com/5kez/frontend_bedproject), proxies `/api` and `/socket.io` to the backend |
+
+Everything in the seed is invented (names, 13-digit IDs starting with `0`, phone numbers, MAC addresses); dates are relative to when the database is created. `docker compose -f compose.demo.yml down -v` starts over. The Gemini chatbot needs `GEMINI_API_KEY` in your environment. `compose.demo.yml` uses public demo passwords — use `docker-compose.yml` with your own `.env` for anything real.
+
+Regenerating data: `node db/seed/build-seed.mjs` (writes the SQL seed and the frontend demo's `dataset.json`); schema: [`db/dump-schema.sh`](db/dump-schema.sh). CI boots `compose.demo.yml` on every push and checks login, data and live vitals.
+
+**Bugs fixed while building the demo (Nov 2026):** a fresh install had no schema at all; HeartRate/SpO₂ alert texts were swapped (and the LLM summary read swapped channels); `GET /patient/department/:id` was shadowed by another route; inout-trend and sensor-profile endpoints returned 500; deactivated users could still log in; password hashes leaked through three endpoints; NOT NULL columns without defaults made patient/profile/history creation fail; editing a department with beds failed on a foreign key; deleting in-use rows now returns 409 with a readable message; one vitals broadcast per MQTT burst instead of per message.
+
+---
+
 ## 👥 Team & My Role · ทีมและบทบาทของผม
 
 This system was built as a **senior project by a team of 7 students** at the Faculty of Informatics, Burapha University (2025).

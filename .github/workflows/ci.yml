@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Lint & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lint (no auto-fix)
+        run: npx eslint "src/**/*.ts"
+      - run: npm run build
+      - name: Seed data is up to date
+        run: |
+          node db/seed/build-seed.mjs
+          git diff --exit-code -- db/init/02-seed.sql db/seed/demo-dataset.json
+
+  demo-stack:
+    name: compose.demo.yml smoke test
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out the frontend next to the backend
+        uses: actions/checkout@v4
+        with:
+          repository: 5kez/frontend_bedproject
+          path: frontend
+      - name: Start the stack
+        env:
+          FRONTEND_CONTEXT: ./frontend
+        run: docker compose -f compose.demo.yml up -d --build --wait --wait-timeout 600
+      - name: Log in through the frontend's nginx and read live data
+        run: |
+          set -e
+          curl -fsS http://localhost:8080/ | grep -q '<div id=q-app'
+          TOKEN=$(curl -fsS -X POST http://localhost:8080/api/auth/login \
+            -H 'content-type: application/json' \
+            -d '{"username":"nurse","password":"demo1234"}' | jq -r .access_token)
+          test -n "$TOKEN" && test "$TOKEN" != null
+          test "$(curl -fsS http://localhost:8080/api/patient/department/1 | jq length)" -gt 0
+          # the simulator should be feeding vitals over MQTT by now
+          for i in $(seq 1 20); do
+            n=$(curl -fsS http://localhost:8080/api/mqtt/status | jq '[.vitalsData[].vitals["2"] | select(. > 0)] | length')
+            [ "$n" -gt 0 ] && echo "live vitals for $n patients" && exit 0
+            sleep 3
+          done
+          echo "no live vitals from the simulator" && exit 1
+      - name: Logs on failure
+        if: failure()
+        run: docker compose -f compose.demo.yml logs --tail 100

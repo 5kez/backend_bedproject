@@ -1,0 +1,22 @@
+{
+  // GitHub Codespaces / Dev Containers: starts the whole demo stack
+  // (frontend + backend + MySQL + Mosquitto + sensor simulator) with fictional data.
+  // When it is ready, open the forwarded port 8080 ("Smart Bed app").
+  "name": "Smart Bed demo",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "hostRequirements": { "cpus": 4, "memory": "8gb" },
+  "postCreateCommand": "npm ci",
+  "postStartCommand": "docker compose -f compose.demo.yml up -d --build",
+  "forwardPorts": [8080, 3000],
+  "portsAttributes": {
+    "8080": { "label": "Smart Bed app", "onAutoForward": "openBrowser" },
+    "3000": { "label": "API (Swagger at /api/docs)", "onAutoForward": "silent" }
+  },
+  "customizations": {
+    "codespaces": { "openFiles": ["README.md"] },
+    "vscode": { "extensions": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode"] }
+  }
+}

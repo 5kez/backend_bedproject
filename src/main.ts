@@ -46,8 +46,10 @@ async function bootstrap() {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
 
-      // Check if the origin is in the allowed origins list
-      if (allowedOrigins.includes(origin)) {
+      // Check if the origin is in the allowed origins list ('*' = any, used
+      // by compose.demo.yml where the app is reached through a proxy whose
+      // public URL is not known in advance, e.g. GitHub Codespaces)
+      if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 

@@ -1,0 +1,122 @@
+# One-command demo of the whole Smart Bed stack with FICTIONAL data:
+#
+#   docker compose -f compose.demo.yml up --build
+#   -> open http://localhost:8080  (logins: nurse / admin / superadmin / reception / tech, password demo1234)
+#
+# What runs:
+#   frontend   Vue/Quasar app behind nginx (built from github.com/5kez/frontend_bedproject)
+#   backend    this NestJS API (REST + Socket.IO), reachable through the frontend at /api
+#   mysql      MySQL 8.4, initialised from db/init (schema + fictional seed + triggers)
+#   mosquitto  MQTT broker the bed sensors publish to
+#   simulator  fake bed sensors: publishes posture / heart rate / SpO2 for every installed sensor
+#
+# Everything here is for local demos only: the passwords below are public
+# defaults. For a real deployment use docker-compose.yml with your own .env.
+# The Gemini chatbot / patient analysis only work if you set GEMINI_API_KEY.
+#
+# Start over with a fresh database:  docker compose -f compose.demo.yml down -v
+
+name: smartbed-demo
+
+x-mqtt-auth: &mqtt-auth
+  MQTT_USERNAME: demo
+  MQTT_PASSWORD: demo-mqtt-password
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: demo-root-password
+      MYSQL_DATABASE: 8bits
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: demo-db-password
+      TZ: ${TZ:-Asia/Bangkok}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pdemo-root-password"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    environment: *mqtt-auth
+    volumes:
+      - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+    entrypoint:
+      - sh
+      - -c
+      - |
+        touch /mosquitto/data/passwd
+        mosquitto_passwd -b /mosquitto/data/passwd "$$MQTT_USERNAME" "$$MQTT_PASSWORD"
+        exec mosquitto -c /mosquitto/config/mosquitto.conf
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_pub -h localhost -u \"$$MQTT_USERNAME\" -P \"$$MQTT_PASSWORD\" -t healthcheck -m ping -i healthcheck || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build: .
+    image: smartbed-backend:demo
+    environment:
+      <<: *mqtt-auth
+      NODE_ENV: production
+      PORT: 3000
+      TZ: ${TZ:-Asia/Bangkok}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: app_user
+      DB_PASSWORD: demo-db-password
+      DB_DATABASE: 8bits
+      MQTT_HOST: mosquitto
+      MQTT_PORT: 1883
+      JWT_SECRET: demo-only-not-a-secret
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ENABLE_SWAGGER: "true"
+      CORS_ORIGIN: "*" # behind the frontend's nginx; public URL varies (Codespaces)
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+    ports:
+      - "3000:3000" # Swagger: http://localhost:3000/api/docs
+
+  simulator:
+    image: smartbed-backend:demo
+    command: ["node", "simulator/simulate.mjs"]
+    environment:
+      <<: *mqtt-auth
+      MQTT_URL: mqtt://mosquitto:1883
+      API_URL: http://backend:3000
+      TICK_MS: 3000
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  frontend:
+    build:
+      # set FRONTEND_CONTEXT=../frontend_bedproject to build from a local checkout
+      context: ${FRONTEND_CONTEXT:-https://github.com/5kez/frontend_bedproject.git#main}
+      args:
+        VITE_API_BASE_URL: /api
+        VITE_WEBSOCKET_URL: /
+        NGINX_CONF: nginx.selfhost.conf
+    image: smartbed-frontend:demo
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+
+volumes:
+  mysql_data:
+  mosquitto_data:
+  uploads_data:
