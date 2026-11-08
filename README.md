@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏥 Smart Ward — Real-Time Bed & Patient Monitoring Platform
+# Smart Ward — Real-Time Bed & Patient Monitoring Platform
 ### ระบบติดตามเตียงและผู้ป่วยแบบเรียลไทม์สำหรับโรงพยาบาล
 
 **An event-driven, Dockerized NestJS backend that turns raw IoT bed-sensor data into real-time alerts for nursing staff.**
@@ -27,7 +27,7 @@
 
 ---
 
-## 🚀 Try it
+## Try it
 
 **In your browser, no install:** [skez.codes/demo/smartbed](https://skez.codes/demo/smartbed/) — the frontend with an in-browser copy of this API and fictional data.
 
@@ -67,7 +67,7 @@ Regenerating data: `node db/seed/build-seed.mjs` (writes the SQL seed and the fr
 
 ---
 
-## 👥 Team & My Role · ทีมและบทบาทของผม
+## Team & My Role · ทีมและบทบาทของผม
 
 This system was built as a **senior project by a team of 7 students** at the Faculty of Informatics, Burapha University (2025).
 The original team repository, with the full commit history, is on GitLab: [8bit-bed-sensor/bed-sensor-backend](https://gitlab.com/8bit-bed-sensor/bed-sensor-backend).
@@ -94,9 +94,9 @@ Other modules (for example the LLM / Text-to-SQL assistant, dashboards and most 
 ---
 
 <a id="english"></a>
-## 🌐 EN — English
+## EN — English
 
-### 📋 Overview
+### Overview
 
 **Smart Ward** is the backend engine for a hospital bed-monitoring system. It ingests **live telemetry from physical bed sensors** (heart rate, SpO₂, bed-exit / posture detection) over **MQTT**, correlates every reading with the correct patient and bed in real time, evaluates it against **configurable clinical thresholds**, and pushes instant alerts to nursing staff over **WebSockets** — closing the loop between "sensor detects a problem" and "a nurse knows about it" in under a second.
 
@@ -104,7 +104,7 @@ On top of the real-time pipeline, it exposes a full **REST + WebSocket API** for
 
 > This repository is the **backend only**. It is designed to be consumed by a separate frontend dashboard (web/mobile) via REST and Socket.IO.
 
-### ✨ Key Features & Engineering Highlights
+### Key Features & Engineering Highlights
 
 Each item below is a real technical problem this system had to solve — not just a checklist.
 
@@ -119,17 +119,17 @@ Each item below is a real technical problem this system had to solve — not jus
 | **Production-hardened containerization** | Multi-stage Docker build (build tools never ship to production), a non-root runtime user, and an entrypoint that safely fixes volume permissions before dropping privileges. |
 | **Resilient by design** | Global exception filter with structured logging, MySQL connection retry/backoff, and container health checks gate startup ordering (`app` won't start serving traffic until `mysql` + `mosquitto` are actually healthy). |
 
-### 🏗️ System Architecture
+### System Architecture
 
 ```mermaid
 flowchart LR
-    subgraph Sensors["🛏️ Bed-Side IoT Sensors"]
+    subgraph Sensors["Bed-Side IoT Sensors"]
         S1["Heart Rate"]
         S2["SpO₂"]
         S3["Bed-Exit / Posture"]
     end
 
-    subgraph Compose["🐳 Docker Compose Network"]
+    subgraph Compose["Docker Compose Network"]
         MQ[("Mosquitto\nMQTT Broker")]
 
         subgraph Backend["NestJS Backend (this repo)"]
@@ -145,7 +145,7 @@ flowchart LR
     end
 
     Gemini[["Google Gemini / Ollama"]]
-    Client["👩‍⚕️ Nurse Dashboard\n(Web / Mobile client)"]
+    Client["Nurse Dashboard\n(Web / Mobile client)"]
 
     S1 & S2 & S3 -- "publish telemetry" --> MQ
     MQ -- "subscribe" --> MQTTSvc
@@ -164,7 +164,7 @@ flowchart LR
 
 **How it flows:** physical sensors publish raw values to **Mosquitto**; the **MQTT Service** binds each MAC address to a patient/bed and keeps an in-memory vitals map; the **Notification Service** evaluates every update against that patient's configured thresholds and, on a breach, both persists a notification and broadcasts it through the **WebSocket Gateway** to any connected dashboard in that room. All CRUD/reporting traffic goes through standard **JWT-guarded REST controllers** backed by **TypeORM/MySQL**. The **LLM Service** sits beside the REST layer as an assistant: it converts natural-language questions into SQL, but every generated query is passed through a strict `SELECT`-only validator before execution.
 
-### 🚀 Local Setup Guide (Docker-first)
+### Local Setup Guide (Docker-first)
 
 This project ships with a **production-ready multi-stage Dockerfile** and a **`docker-compose.yml`** that wires up the app together with its two required backing services — **MySQL** and an **MQTT broker (Mosquitto)** — with health-checked startup ordering, so `docker compose up` gives you a fully working stack with one command.
 
@@ -212,7 +212,7 @@ npm run start:dev   # requires a MySQL instance and MQTT broker reachable via yo
 ```
 </details>
 
-### 🔑 Environment Variables
+### Environment Variables
 
 All configuration is driven by environment variables — **no secret is ever hardcoded** in the source. Copy the committed template and fill it in:
 
@@ -224,16 +224,16 @@ cp .env.example .env
 
 | Variable | Purpose | Required |
 |---|---|:---:|
-| `DB_HOST` / `DB_PORT` / `DB_USERNAME` / `DB_PASSWORD` / `DB_DATABASE` | MySQL connection (overridden automatically to point at the `mysql` container when run via Docker Compose) | ✅ |
-| `JWT_SECRET` / `JWT_EXPIRES_IN` | Signing key & TTL for authentication tokens — app **refuses to boot** without a real secret | ✅ |
-| `MQTT_HOST` / `MQTT_PORT` / `MQTT_USERNAME` / `MQTT_PASSWORD` | Connection to the MQTT broker that carries sensor telemetry | ✅ |
-| `GEMINI_API_KEY` | Google Gemini API key powering AI patient-summary & natural-language queries | ✅ |
+| `DB_HOST` / `DB_PORT` / `DB_USERNAME` / `DB_PASSWORD` / `DB_DATABASE` | MySQL connection (overridden automatically to point at the `mysql` container when run via Docker Compose) | Yes |
+| `JWT_SECRET` / `JWT_EXPIRES_IN` | Signing key & TTL for authentication tokens — app **refuses to boot** without a real secret | Yes |
+| `MQTT_HOST` / `MQTT_PORT` / `MQTT_USERNAME` / `MQTT_PASSWORD` | Connection to the MQTT broker that carries sensor telemetry | Yes |
+| `GEMINI_API_KEY` | Google Gemini API key powering AI patient-summary & natural-language queries | Yes |
 | `OLLAMA_URL` | Optional local LLM endpoint (self-hosted Mistral via Ollama) as an alternative to Gemini | ⬜ |
-| `CORS_ORIGIN` / `CORS_METHODS` / `CORS_ALLOWED_HEADERS` | Cross-origin access control for the frontend client | ✅ |
+| `CORS_ORIGIN` / `CORS_METHODS` / `CORS_ALLOWED_HEADERS` | Cross-origin access control for the frontend client | Yes |
 | `SWAGGER_PATH` / `ENABLE_SWAGGER` | Toggle & path for the interactive API docs | ⬜ |
-| `MYSQL_ROOT_PASSWORD` / `MYSQL_DATABASE` / `MYSQL_USER` / `MYSQL_PASSWORD` | **Docker Compose only** — provisions a least-privilege MySQL user for the local `mysql` container | ✅ (Docker) |
+| `MYSQL_ROOT_PASSWORD` / `MYSQL_DATABASE` / `MYSQL_USER` / `MYSQL_PASSWORD` | **Docker Compose only** — provisions a least-privilege MySQL user for the local `mysql` container | (Docker) |
 
-### 📂 Project Structure
+### Project Structure
 
 ```
 src/
@@ -249,7 +249,7 @@ src/
 └── ...                   # buildings, departments, floors, sites, roles, users, etc.
 ```
 
-### 🧪 Testing & Code Quality
+### Testing & Code Quality
 
 ```bash
 npm run test        # unit tests (Jest)
@@ -259,7 +259,7 @@ npm run lint         # ESLint + Prettier (0 errors enforced)
 
 The codebase is held to a strict, type-checked ESLint configuration (`typescript-eslint` recommended-type-checked ruleset) — no implicit `any` leaks across service boundaries, and every raw SQL result is explicitly typed at the query site.
 
-### 📄 License
+### License
 
 Private / proprietary. All rights reserved.
 
@@ -268,7 +268,7 @@ Private / proprietary. All rights reserved.
 <a id="thai"></a>
 ## 🇹🇭 ภาษาไทย
 
-### 📋 ภาพรวมโครงการ
+### ภาพรวมโครงการ
 
 **Smart Ward** คือระบบ backend สำหรับระบบติดตามเตียงผู้ป่วยในโรงพยาบาล ทำหน้าที่รับข้อมูล**เซนเซอร์ IoT แบบเรียลไทม์**จากเตียงผู้ป่วยจริง (อัตราการเต้นของหัวใจ, ระดับออกซิเจนในเลือด (SpO₂), การลุกออกจากเตียง/ท่านั่ง) ผ่านโปรโตคอล **MQTT** เชื่อมโยงข้อมูลกับผู้ป่วยและเตียงที่ถูกต้องแบบทันที ประเมินผลตาม**เกณฑ์แจ้งเตือนทางคลินิกที่ตั้งค่าได้** และส่งการแจ้งเตือนไปยังพยาบาลผ่าน **WebSocket** ภายในเวลาไม่ถึงหนึ่งวินาที — ปิด gap ระหว่าง "เซนเซอร์ตรวจพบความผิดปกติ" กับ "พยาบาลรู้ทันที"
 
@@ -276,7 +276,7 @@ Private / proprietary. All rights reserved.
 
 > Repository นี้เป็นส่วน **backend เท่านั้น** ออกแบบมาให้ frontend dashboard (เว็บ/มือถือ) แยกต่างหากเรียกใช้งานผ่าน REST และ Socket.IO
 
-### ✨ ฟีเจอร์หลักและจุดเด่นทางเทคนิค
+### ฟีเจอร์หลักและจุดเด่นทางเทคนิค
 
 แต่ละรายการด้านล่างคือปัญหาทางเทคนิคจริงที่ระบบนี้ต้องแก้ ไม่ใช่แค่รายการฟีเจอร์ทั่วไป
 
@@ -291,13 +291,13 @@ Private / proprietary. All rights reserved.
 | **Containerization ระดับ production** | Docker แบบ multi-stage build (เครื่องมือสำหรับ build ไม่ถูกส่งไปยัง production เลย) รันด้วย non-root user และมี entrypoint ที่แก้ไขสิทธิ์ของ volume อย่างปลอดภัยก่อนลดสิทธิ์ลง |
 | **ออกแบบให้ทนทานต่อความผิดพลาด** | มี global exception filter พร้อม structured logging, MySQL connection retry/backoff, และ container health check ที่ควบคุมลำดับการ start (`app` จะไม่เริ่มรับ request จนกว่า `mysql` และ `mosquitto` จะพร้อมจริง) |
 
-### 🏗️ ภาพรวมสถาปัตยกรรมระบบ
+### ภาพรวมสถาปัตยกรรมระบบ
 
 ดูแผนภาพ Mermaid ในหัวข้อ **System Architecture** ด้านบน (ใช้ร่วมกันทั้งสองภาษา)
 
 **การทำงานโดยสรุป:** เซนเซอร์จริงส่งข้อมูลดิบไปยัง **Mosquitto**; **MQTT Service** จับคู่ MAC address กับผู้ป่วย/เตียง และเก็บค่าสัญญาณชีพล่าสุดไว้ใน memory; **Notification Service** ตรวจสอบค่าทุกครั้งที่อัปเดตกับเกณฑ์ที่ตั้งไว้ของผู้ป่วยรายนั้น และเมื่อเกินเกณฑ์ จะบันทึกการแจ้งเตือนและกระจายผ่าน **WebSocket Gateway** ไปยัง dashboard ที่เชื่อมต่ออยู่ใน room นั้นทันที ส่วนงาน CRUD/รายงานทั้งหมดผ่าน **REST controller ที่มี JWT guard** เชื่อมกับ **TypeORM/MySQL** และ **LLM Service** ทำหน้าที่เป็นผู้ช่วยควบคู่กับ REST layer: แปลงคำถามภาษาธรรมชาติเป็น SQL แต่ทุกคำสั่งที่สร้างขึ้นต้องผ่าน validator ที่ยอมรับเฉพาะ `SELECT` เท่านั้นก่อนรันจริง
 
-### 🚀 คู่มือการติดตั้งใช้งานบนเครื่อง Local (เน้น Docker)
+### คู่มือการติดตั้งใช้งานบนเครื่อง Local (เน้น Docker)
 
 โปรเจกต์นี้มาพร้อม **Dockerfile แบบ multi-stage พร้อมใช้งานระดับ production** และ **`docker-compose.yml`** ที่เชื่อมแอปเข้ากับ backing service ที่จำเป็นทั้งสองตัว คือ **MySQL** และ **MQTT broker (Mosquitto)** พร้อมลำดับการ start ที่ควบคุมด้วย health check ทำให้แค่รัน `docker compose up` ครั้งเดียวก็ได้ stack ที่ใช้งานได้ครบ
 
@@ -345,7 +345,7 @@ npm run start:dev   # ต้องมี MySQL instance และ MQTT broker �
 ```
 </details>
 
-### 🔑 การตั้งค่า Environment Variables
+### การตั้งค่า Environment Variables
 
 การตั้งค่าทั้งหมดของระบบมาจาก environment variables — **ไม่มี secret ใดถูก hardcode ไว้ในซอร์สโค้ดเด็ดขาด** ให้คัดลอกไฟล์ตัวอย่างที่ commit ไว้แล้วกรอกค่าจริง:
 
@@ -357,16 +357,16 @@ cp .env.example .env
 
 | ตัวแปร | หน้าที่ | จำเป็น |
 |---|---|:---:|
-| `DB_HOST` / `DB_PORT` / `DB_USERNAME` / `DB_PASSWORD` / `DB_DATABASE` | การเชื่อมต่อ MySQL (จะถูก override ให้ชี้ไปที่ container `mysql` โดยอัตโนมัติเมื่อรันผ่าน Docker Compose) | ✅ |
-| `JWT_SECRET` / `JWT_EXPIRES_IN` | Secret key สำหรับเซ็น token และอายุการใช้งาน — **แอปจะไม่ยอม start** ถ้าไม่มีค่า secret จริง | ✅ |
-| `MQTT_HOST` / `MQTT_PORT` / `MQTT_USERNAME` / `MQTT_PASSWORD` | การเชื่อมต่อ MQTT broker ที่รับส่งข้อมูลเซนเซอร์ | ✅ |
-| `GEMINI_API_KEY` | API key ของ Google Gemini สำหรับสรุปข้อมูลผู้ป่วยด้วย AI และตอบคำถามภาษาธรรมชาติ | ✅ |
+| `DB_HOST` / `DB_PORT` / `DB_USERNAME` / `DB_PASSWORD` / `DB_DATABASE` | การเชื่อมต่อ MySQL (จะถูก override ให้ชี้ไปที่ container `mysql` โดยอัตโนมัติเมื่อรันผ่าน Docker Compose) | Yes |
+| `JWT_SECRET` / `JWT_EXPIRES_IN` | Secret key สำหรับเซ็น token และอายุการใช้งาน — **แอปจะไม่ยอม start** ถ้าไม่มีค่า secret จริง | Yes |
+| `MQTT_HOST` / `MQTT_PORT` / `MQTT_USERNAME` / `MQTT_PASSWORD` | การเชื่อมต่อ MQTT broker ที่รับส่งข้อมูลเซนเซอร์ | Yes |
+| `GEMINI_API_KEY` | API key ของ Google Gemini สำหรับสรุปข้อมูลผู้ป่วยด้วย AI และตอบคำถามภาษาธรรมชาติ | Yes |
 | `OLLAMA_URL` | Endpoint ของ LLM ภายในเครื่อง (Mistral ผ่าน Ollama) เป็นตัวเลือกเสริมแทน Gemini | ⬜ |
-| `CORS_ORIGIN` / `CORS_METHODS` / `CORS_ALLOWED_HEADERS` | การควบคุมการเข้าถึงข้าม origin สำหรับ frontend client | ✅ |
+| `CORS_ORIGIN` / `CORS_METHODS` / `CORS_ALLOWED_HEADERS` | การควบคุมการเข้าถึงข้าม origin สำหรับ frontend client | Yes |
 | `SWAGGER_PATH` / `ENABLE_SWAGGER` | เปิด/ปิด และกำหนด path ของเอกสาร API แบบ interactive | ⬜ |
-| `MYSQL_ROOT_PASSWORD` / `MYSQL_DATABASE` / `MYSQL_USER` / `MYSQL_PASSWORD` | **ใช้เฉพาะ Docker Compose** — สร้าง user MySQL แบบสิทธิ์น้อยที่สุดสำหรับ container `mysql` ในเครื่อง local | ✅ (Docker) |
+| `MYSQL_ROOT_PASSWORD` / `MYSQL_DATABASE` / `MYSQL_USER` / `MYSQL_PASSWORD` | **ใช้เฉพาะ Docker Compose** — สร้าง user MySQL แบบสิทธิ์น้อยที่สุดสำหรับ container `mysql` ในเครื่อง local | (Docker) |
 
-### 📂 โครงสร้างโปรเจกต์
+### โครงสร้างโปรเจกต์
 
 ```
 src/
@@ -382,7 +382,7 @@ src/
 └── ...                    # อาคาร, แผนก, ชั้น, สถานที่, สิทธิ์การใช้งาน, ผู้ใช้งาน ฯลฯ
 ```
 
-### 🧪 การทดสอบและคุณภาพโค้ด
+### การทดสอบและคุณภาพโค้ด
 
 ```bash
 npm run test        # unit test (Jest)
@@ -392,6 +392,6 @@ npm run lint         # ESLint + Prettier (บังคับ 0 error)
 
 โค้ดทั้งหมดอยู่ภายใต้มาตรฐาน ESLint ที่เข้มงวดและตรวจสอบ type (`typescript-eslint` recommended-type-checked) — ไม่มีการหลุดของ `any` แบบไม่ตั้งใจข้ามขอบเขต service และผลลัพธ์จาก raw SQL query ทุกจุดถูกกำหนด type อย่างชัดเจน
 
-### 📄 สัญญาอนุญาต
+### สัญญาอนุญาต
 
 Private / proprietary สงวนสิทธิ์ทั้งหมด
