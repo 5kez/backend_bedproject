@@ -1,6 +1,6 @@
--- Clean schema generated from the TypeORM entities (TypeORM synchronize against an empty MySQL 8 DB,
--- then mysqldump --no-data). Runs automatically on first 'docker compose up' via docker-entrypoint-initdb.d.
--- Regenerate after entity changes: see db/README.md
+-- Clean schema generated from the TypeORM entities by db/dump-schema.sh
+-- (synchronize against an empty MySQL 8 database, then mysqldump --no-data).
+-- Runs automatically on the first 'docker compose up' via docker-entrypoint-initdb.d.
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 CREATE TABLE `bed` (
@@ -137,8 +137,8 @@ CREATE TABLE `history_patient` (
   `status` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `create_user_id` int NOT NULL,
   `update_user_id` int NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`history_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE `master_status` (
@@ -147,8 +147,8 @@ CREATE TABLE `master_status` (
   `name_img` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `status_group` int NOT NULL,
   `active` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   `create_userlogin` int NOT NULL,
   `update_userlogin` int NOT NULL,
   PRIMARY KEY (`id`)
@@ -205,8 +205,8 @@ CREATE TABLE `patient` (
   `image` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `sex` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `remark` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   `create_user_id` int NOT NULL,
   `update_user_id` int NOT NULL,
   `room_id` int NOT NULL,
@@ -227,8 +227,8 @@ CREATE TABLE `profile` (
   `line_id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `photo` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `site_id` int NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`profile_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE `province` (
@@ -261,8 +261,8 @@ CREATE TABLE `sensor` (
   `hash` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `site_Id` int NOT NULL,
   `sensor_type_id` int NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`sensor_id`),
   KEY `FK_0dc13de16cbde6deabae21c92e4` (`bed_id`),
   KEY `FK_61270f2b0e52f614a00b00129e6` (`sensor_type_id`),
@@ -293,8 +293,8 @@ CREATE TABLE `sensor_type` (
   `sensor_type_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `desc` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`sensor_type_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE `sites` (
@@ -307,7 +307,7 @@ CREATE TABLE `sites` (
   `prov_id` tinyint NOT NULL,
   `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
-  `site_global` int NOT NULL,
+  `site_global` int NOT NULL DEFAULT '1',
   `name_img` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`site_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -332,7 +332,7 @@ CREATE TABLE `user` (
   `role_id` int NOT NULL,
   `roles_code` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `department_id` int NOT NULL,
-  `floor_id` int NOT NULL,
+  `floor_id` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 SET FOREIGN_KEY_CHECKS = 1;

@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Department } from './entities/department.entity';
@@ -76,16 +81,42 @@ export class DepartmentService {
       await this.departmentRepo.save(dept);
     }
     // clear mapping เดิม
-    await this.departmentBuildingRepo.delete({ department: { id } });
-
-    // ✅ ใช้ dto.mappings เหมือน create()
-    const mappings = (dto.mappings || []).map((m) =>
-      this.departmentBuildingRepo.create({
-        department: dept,
-        building: { id: m.building_id },
-        floor_number: m.floor_number ?? null, // ✅ ใช้ floor_number แทน floor_id
-      }),
-    );
+    // Sync the ward mappings instead of deleting and recreating all of them:
+    // the old delete-all failed with a foreign-key error as soon as any ward
+    // of the department had beds, so a department with beds could not even
+    // be renamed.
+    const wanted = (dto.mappings || []).map((m) => ({
+      building_id: Number(m.building_id),
+      floor_number: m.floor_number ?? null,
+    }));
+    const existing = await this.departmentBuildingRepo.find({
+      where: { department_id: id },
+      relations: ['beds'],
+    });
+    const same = (
+      a: { building_id: number; floor_number: number | null },
+      b: { building_id: number; floor_number: number | null },
+    ) =>
+      Number(a.building_id) === Number(b.building_id) &&
+      (a.floor_number ?? null) === (b.floor_number ?? null);
+    for (const ward of existing) {
+      if (wanted.some((w) => same(w, ward))) continue;
+      if (ward.beds?.length) {
+        throw new BadRequestException(
+          'ไม่สามารถนำอาคาร/ชั้นนี้ออกได้ เนื่องจากยังมีเตียงอยู่ในแผนก กรุณาย้ายหรือลบเตียงก่อน',
+        );
+      }
+      await this.departmentBuildingRepo.delete(ward.id);
+    }
+    const mappings = wanted
+      .filter((w) => !existing.some((ward) => same(w, ward)))
+      .map((m) =>
+        this.departmentBuildingRepo.create({
+          department: dept,
+          building: { id: m.building_id },
+          floor_number: m.floor_number,
+        }),
+      );
 
     if (mappings.length > 0) {
       await this.departmentBuildingRepo.save(mappings);

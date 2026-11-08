@@ -1,5 +1,6 @@
 // Synthetic vital-sign model shared by the MQTT simulator (self-host) and the
-// in-browser demo (frontend src/demo/vitalsModel.ts is a copy of this file).
+// in-browser demo (frontend src/demo/vitalsModel.ts is a TypeScript copy of this file;
+// keep the two in sync).
 //
 // Values are synthetic, not recorded patient data. Each bed drifts around a
 // baseline with occasional excursions so the alert pipeline has something to do:

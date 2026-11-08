@@ -1,4 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity()
 export class Profile {
@@ -16,8 +22,8 @@ export class Profile {
   photo: string;
   @Column()
   site_id: number;
-  @Column()
+  @CreateDateColumn({ type: 'datetime' })
   created_at: Date;
-  @Column()
+  @UpdateDateColumn({ type: 'datetime' })
   updated_at: Date;
 }

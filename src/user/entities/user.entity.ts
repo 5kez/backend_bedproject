@@ -28,6 +28,7 @@ export class User {
   roles_code: string;
   @Column()
   department_id: number;
-  @Column()
+  // the user form has no floor field
+  @Column({ default: 0 })
   floor_id: number;
 }

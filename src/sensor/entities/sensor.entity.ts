@@ -6,6 +6,8 @@ import {
   PrimaryGeneratedColumn,
   JoinColumn,
   ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Bed } from 'src/bed/entities/bed.entity';
 import { SensorType } from 'src/sensor-type/entities/sensor-type.entity';
@@ -51,9 +53,9 @@ export class Sensor {
   @OneToOne(() => SensorProfile, (profile) => profile.sensor)
   sensor_profile: SensorProfile;
 
-  @Column()
+  @CreateDateColumn({ type: 'datetime' })
   created_at: Date;
 
-  @Column()
+  @UpdateDateColumn({ type: 'datetime' })
   updated_at: Date;
 }

@@ -118,7 +118,7 @@ t.user = []
 staff.forEach(([user_name, name, last, role, dept, building], i) => {
   const id = i + 1
   t.profile.push({
-    profile_id: id, name, surname: last, email: `${user_name}@demo.invalid`, line_id: '',
+    profile_id: id, name, surname: last, email: `${user_name}@demo.invalid`, line_id: `demo_${user_name}`,
     photo: '', site_id: 1, created_at: ago(200 * DAY), updated_at: ago(200 * DAY),
   })
   t.user.push({
@@ -158,7 +158,7 @@ bedWard.forEach((ward, i) => {
   t.bed.push({ bed_id: i + 1, department_building_id: ward, patient_id: null, created_at: ago(250 * DAY), updated_at: ago(250 * DAY) })
 })
 
-// ---------- patients (fictional names, IDs start with 0 so they can never be real Thai IDs) ----------
+// ---------- patients (fictional names, 13-digit IDs starting with 0 so they can never be real Thai IDs) ----------
 const first = ['สมชาย', 'สมหญิง', 'บุญมา', 'คำแก้ว', 'ประเสริฐ', 'จันทร์เพ็ญ', 'ทองดี', 'บัวผัน', 'สายใจ', 'ชูชาติ', 'ละเอียด', 'พรทิพย์', 'วิชัย', 'อำนวย', 'สุนีย์', 'ประยูร', 'บุญเรือน', 'มณี', 'สมบัติ', 'ทองใบ']
 const last = ['ทดลองดี', 'ตัวอย่างสุข', 'สาธิตกุล', 'สมมุติวงศ', 'จำลองศรี', 'ทดสอบชัย', 'ตัวแทนงาม', 'สาธิตพร']
 const usedNames = new Set()
@@ -189,7 +189,7 @@ function addPatient({ ward, admittedAgo, dischargedAgo, bedId }) {
   t.patient.push({
     patient_id: pid, name: patientName(), birthDate: birth.toISOString().slice(0, 10),
     status: active ? 1 : 0, telFam: `080-000-${String(1000 + pid).slice(-4)}`,
-    thaiId: `0-0000-${String(10000 + pid).slice(-5)}-00-0`, image: '', sex,
+    thaiId: `00000000${String(10000 + pid).slice(-5)}`, image: '', sex,
     remark: pick(remarks), created_at: ago(admittedAgo), updated_at: ago(dischargedAgo ?? admittedAgo),
     create_user_id: 6, update_user_id: 6, room_id: ward, floor_id: w.floor,
     admitDate: ago(admittedAgo), bed_id: bedId ?? null, site_id: 1, department_id: w.dept,
@@ -216,6 +216,10 @@ for (const bedId of occupied) {
     transferred_at: null, notes: null, assigned_by: 1, created_at: ago(admitted - 30), updated_at: ago(admitted - 30),
   })
 }
+// 3 newly registered patients waiting for a bed (one per department) - lets
+// visitors try "assign patient to bed" right away
+for (const ward of [1, 2, 3]) addPatient({ ward, admittedAgo: int(20, 240) })
+
 // a transfer in the history: patient on bed 7 came from bed 9
 {
   const a = t.bed_assignments.find((x) => x.bed_id === 7)

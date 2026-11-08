@@ -1,4 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('sensor_type')
 export class SensorType {
@@ -11,9 +17,9 @@ export class SensorType {
   @Column({ nullable: true })
   desc?: string;
 
-  @Column()
+  @CreateDateColumn({ type: 'datetime' })
   created_at: Date;
 
-  @Column()
+  @UpdateDateColumn({ type: 'datetime' })
   updated_at: Date;
 }

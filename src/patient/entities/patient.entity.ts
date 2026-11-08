@@ -6,6 +6,8 @@ import {
   OneToOne,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Department } from 'src/department/entities/department.entity';
 import { BedAssignment } from 'src/bed/entities/bed-assignment.entity';
@@ -31,9 +33,9 @@ export class Patient {
   sex: string;
   @Column()
   remark: string;
-  @Column({ name: 'created_at' })
+  @CreateDateColumn({ name: 'created_at', type: 'datetime' })
   created_date: Date;
-  @Column({ name: 'updated_at' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'datetime' })
   updated_date: Date;
   @Column()
   create_user_id: number;

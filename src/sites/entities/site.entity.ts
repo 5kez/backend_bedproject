@@ -37,7 +37,7 @@ export class Site {
   @UpdateDateColumn({ type: 'datetime' })
   updated_at: Date;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', default: 1 })
   site_global: number;
 
   @Column({ type: 'varchar', nullable: true })

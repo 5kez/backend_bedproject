@@ -1,4 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity()
 export class MasterStatus {
@@ -17,10 +23,10 @@ export class MasterStatus {
   @Column()
   active: string;
 
-  @Column()
+  @CreateDateColumn({ type: 'datetime' })
   created_at: Date;
 
-  @Column()
+  @UpdateDateColumn({ type: 'datetime' })
   updated_at: Date;
 
   @Column()

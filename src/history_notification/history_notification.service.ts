@@ -19,8 +19,11 @@ export class HistoryNotificationService {
     );
   }
 
+  // newest first - the history screen used to open on the oldest alerts
   findAll() {
-    return this.historyNotificationRepository.find();
+    return this.historyNotificationRepository.find({
+      order: { Noti_time: 'DESC' },
+    });
   }
 
   findOne(id: number) {
@@ -33,6 +36,7 @@ export class HistoryNotificationService {
       .innerJoin(Patient, 'patient', 'history.Patient_Id = patient.patient_id')
       .where('patient.site_id = :site_id', { site_id })
       .select('history')
+      .orderBy('history.Noti_time', 'DESC')
       .getMany();
   }
 }

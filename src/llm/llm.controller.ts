@@ -18,8 +18,8 @@ export class LLMController {
       return { summary: 'ไม่พบข้อมูลผู้ป่วย' };
     }
 
-    const oxygen = this.mqtt.getVital(patient.patient_id, 2);
-    const heartRate = this.mqtt.getVital(patient.patient_id, 3);
+    const oxygen = this.mqtt.getVital(patient.patient_id, 3); // 3 = SpO2 (was 2, swapped)
+    const heartRate = this.mqtt.getVital(patient.patient_id, 2); // 2 = HeartRate
 
     const summary = await this.llmService.summarizePatient({
       remark: patient.remark,

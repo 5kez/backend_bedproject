@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { Sensor } from './entities/sensor.entity';
@@ -98,7 +102,7 @@ export class SensorsService {
     });
 
     if (existingSensor && existingSensor.id !== sensorId) {
-      throw new Error(`เตียงนี้มี sensor type เดียวกันแล้ว`);
+      throw new BadRequestException(`เตียงนี้มี sensor type เดียวกันแล้ว`);
     }
 
     await this.sensorRepository.update(sensorId, { bed_id: bedId });

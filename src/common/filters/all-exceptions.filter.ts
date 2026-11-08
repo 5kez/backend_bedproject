@@ -17,15 +17,28 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
 
+    // Deleting a row that other rows still reference (a building with wards,
+    // a site with buildings, ...) used to surface as a bare 500.
+    const dbCode = (exception as { code?: string } | null)?.code;
+    const inUse =
+      dbCode === 'ER_ROW_IS_REFERENCED_2' || dbCode === 'ER_ROW_IS_REFERENCED';
+
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+        : inUse
+          ? HttpStatus.CONFLICT
+          : HttpStatus.INTERNAL_SERVER_ERROR;
 
     const body =
       exception instanceof HttpException
         ? exception.getResponse()
-        : { statusCode: status, message: 'Internal server error' };
+        : inUse
+          ? {
+              statusCode: status,
+              message: 'ไม่สามารถลบได้ เนื่องจากยังมีข้อมูลอื่นเชื่อมโยงอยู่',
+            }
+          : { statusCode: status, message: 'Internal server error' };
 
     const message =
       exception instanceof Error ? exception.message : String(exception);
