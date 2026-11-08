@@ -61,7 +61,9 @@ export class PatientController {
     return await this.patientService.findAllPatientActiveCase();
   }
 
-  @Get(':floor/:floor_id')
+  // Was ':floor/:floor_id', which also swallowed GET /patient/department/:id
+  // (declared later), so department lists came back filtered by floor instead.
+  @Get('floor/:floor_id')
   @ApiOperation({ summary: 'Get patients by Floor ID' })
   @ApiParam({ name: 'floor_id', type: Number, description: 'Floor ID' })
   @ApiResponse({ status: 200, description: 'Patients data retrieved' })

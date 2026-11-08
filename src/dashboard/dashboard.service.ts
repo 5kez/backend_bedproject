@@ -392,9 +392,9 @@ export class DashboardService {
 
     if (!siteMode && deptBuildingId > 0) {
       const deptRows = await this.dataSource.query<
-        { department_id: number; floor_number: number | null }[]
+        { department_id: number; floor_id: number | null }[]
       >(
-        `SELECT department_id, floor_number
+        `SELECT department_id, floor_id
          FROM department_building
          WHERE department_building_id = ?
          LIMIT 1`,
@@ -410,9 +410,11 @@ export class DashboardService {
         'OR (db.department_building_id IS NULL AND p.department_id = ?',
       ];
       sharedParams.push(deptBuildingId, targetDept.department_id);
-      if (targetDept.floor_number !== null) {
-        deptConditionParts.push('AND p.floor_number = ?');
-        sharedParams.push(targetDept.floor_number);
+      // patient has no floor_number column - match on floor_id instead
+      // (this used to fail with "Unknown column 'p.floor_number'").
+      if (targetDept.floor_id !== null) {
+        deptConditionParts.push('AND p.floor_id = ?');
+        sharedParams.push(targetDept.floor_id);
       }
       deptConditionParts.push(')');
       const deptCondition = deptConditionParts.join(' ');

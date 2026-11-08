@@ -600,23 +600,25 @@ export class NotificationService {
           details = `ตำแหน่ง: ${sensorValue}, การแจ้งเตือน: ${alertType}`;
           break;
         case 2: {
-          // SpO2 (ถูกต้องแล้ว)
-          const spo2Low = setting.config.threshold_low ?? 90;
-          message = `SpO2`;
-          details = `ระดับออกซิเจนในเลือด: ${sensorValue}% (ต่ำกว่า ${spo2Low}%)`;
+          // HeartRate - sensor_type_id 2 is the heartrate/<mac> MQTT channel
+          // (see MqttService PREFIX and PatientGateway). The SpO2/HeartRate
+          // texts used to be swapped here, so a fast pulse was reported as
+          // "low blood oxygen".
+          const hrLow = setting.config.threshold_low ?? 60;
+          const hrHigh = setting.config.threshold_high ?? 100;
+          message = `HeartRate`;
+          if (sensorValue < hrLow) {
+            details = `อัตราการเต้นของหัวใจ: ${sensorValue} bpm (ต่ำกว่า ${hrLow} bpm)`;
+          } else {
+            details = `อัตราการเต้นของหัวใจ: ${sensorValue} bpm (สูงกว่า ${hrHigh} bpm)`;
+          }
           break;
         }
         case 3: {
-          // HeartRate (ถูกต้องแล้ว)
-          const hrLow = setting.config.threshold_low ?? 60;
-          const hrHigh = setting.config.threshold_high ?? 100;
-          if (sensorValue < hrLow) {
-            message = `HeartRate`;
-            details = `อัตราการเต้นของหัวใจ: ${sensorValue} bpm (ต่ำกว่า ${hrLow} bpm)`;
-          } else if (sensorValue > hrHigh) {
-            message = `HeartRate`;
-            details = `อัตราการเต้นของหัวใจ: ${sensorValue} bpm (สูงกว่า ${hrHigh} bpm)`;
-          }
+          // SpO2 - sensor_type_id 3 is the spo2/<mac> MQTT channel
+          const spo2Low = setting.config.threshold_low ?? 90;
+          message = `SpO2`;
+          details = `ระดับออกซิเจนในเลือด: ${sensorValue}% (ต่ำกว่า ${spo2Low}%)`;
           break;
         }
         default:

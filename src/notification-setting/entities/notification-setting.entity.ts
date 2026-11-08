@@ -37,12 +37,7 @@ export class NotificationSetting {
   @Column({ type: 'json' })
   config: SensorAlertConfig;
 
-  @UpdateDateColumn({
-    name: 'updated_at',
-    type: 'datetime',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
+  @UpdateDateColumn({ name: 'updated_at', type: 'datetime' })
   updated_at: Date;
 
   // Relations

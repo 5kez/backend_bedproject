@@ -64,9 +64,18 @@ export class PatientGateway implements OnGatewayInit {
     await this.updateAllVitals();
 
     // Handle real-time updates and send complete patient vitals array
-    this.mqtt.onUpdate(() => {
+    // Every MQTT message (3 per bed per tick) used to trigger a full patient
+    // query + broadcast. Coalesce bursts into at most one update per 500 ms.
+    this.mqtt.onUpdate(() => this.scheduleVitalsUpdate());
+  }
+
+  private vitalsTimer: NodeJS.Timeout | null = null;
+  private scheduleVitalsUpdate() {
+    if (this.vitalsTimer) return;
+    this.vitalsTimer = setTimeout(() => {
+      this.vitalsTimer = null;
       void this.updateAllVitals();
-    });
+    }, 500);
   }
 
   // โหลดข้อมูล notification settings ล่วงหน้าสำหรับทุก patient

@@ -10,7 +10,9 @@ export class User {
   site_id: number;
   @Column()
   user_name: string;
-  @Column()
+  // Never selected unless asked for explicitly (login / password migration),
+  // so relations like bedAssignment.assignedByUser no longer leak the hash.
+  @Column({ select: false })
   user_password: string;
   @Column()
   name: string;

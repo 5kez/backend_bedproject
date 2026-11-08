@@ -23,7 +23,7 @@ export class SensorProfileService {
   async findBySensorId(sensorId: number): Promise<SensorProfile | null> {
     return this.sensorProfileRepository.findOne({
       where: { sensor: { id: sensorId } },
-      relations: ['sensor', 'sensor.patient'],
+      relations: ['sensor', 'sensor.bed'],
     });
   }
 

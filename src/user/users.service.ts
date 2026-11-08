@@ -26,7 +26,10 @@ export class UsersService {
 
   // Method to migrate existing plain text passwords to hashed passwords
   async migrateExistingPasswords(): Promise<void> {
-    const users = await this.usersRepository.find();
+    const users = await this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.user_password')
+      .getMany();
 
     for (const user of users) {
       // Check if password is already hashed (bcrypt hashes start with $2b$)
@@ -96,7 +99,11 @@ export class UsersService {
   }
 
   async getUserByUsername(username: string) {
-    const user = await this.usersRepository.findOneBy({ user_name: username });
+    const user = await this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.user_password')
+      .where('user.user_name = :username', { username })
+      .getOne();
     if (!user) {
       this.logger.debug(`User not found: ${username}`);
       return null; // Return null instead of throwing error
@@ -125,6 +132,21 @@ export class UsersService {
     this.logger.debug(`Looking for users from site: ${site_id}`);
     const users = await this.usersRepository.find({
       where: { site_id: Number(site_id), role_id: In([1, 4, 5]) },
+      // 🔒 never send password hashes to the client (these two endpoints used to)
+      select: {
+        id: true,
+        profile_id: true,
+        site_id: true,
+        user_name: true,
+        name: true,
+        last_name: true,
+        build_id: true,
+        status: true,
+        role_id: true,
+        roles_code: true,
+        department_id: true,
+        floor_id: true,
+      },
     });
     if (users.length === 0) {
       this.logger.debug(`No users found for site: ${site_id}`);
@@ -138,6 +160,21 @@ export class UsersService {
     this.logger.debug(`Looking for nurses from site: ${site_id}`);
     const users = await this.usersRepository.find({
       where: { site_id: Number(site_id), role_id: In([1, 4]) },
+      // 🔒 never send password hashes to the client (these two endpoints used to)
+      select: {
+        id: true,
+        profile_id: true,
+        site_id: true,
+        user_name: true,
+        name: true,
+        last_name: true,
+        build_id: true,
+        status: true,
+        role_id: true,
+        roles_code: true,
+        department_id: true,
+        floor_id: true,
+      },
     });
     if (users.length === 0) {
       this.logger.debug(`No nurses found for site: ${site_id}`);

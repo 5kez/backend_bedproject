@@ -28,7 +28,9 @@ export class AuthService {
         HttpStatus.UNAUTHORIZED,
       );
     }
-    if (!user.status) {
+    // status is a varchar column ("1"/"0"), so the string "0" used to be
+    // truthy and deactivated users could still log in.
+    if (!user.status || ['0', 'false'].includes(String(user.status))) {
       this.logger.warn(`Login rejected: inactive user "${user_name}"`);
       throw new HttpException(
         {
